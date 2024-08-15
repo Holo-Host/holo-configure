@@ -1033,6 +1033,7 @@ dependencies = [
 name = "hpos-config-gen-cli"
 version = "0.2.1"
 dependencies = [
+ "base64 0.13.1",
  "clap 4.5.16",
  "docopt",
  "ed25519-dalek",

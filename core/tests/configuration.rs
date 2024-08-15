@@ -40,13 +40,21 @@ mod tests {
         let revocation_pub_key = VerifyingKey::from_bytes(&rev_key_bytes).unwrap();
         let holoport_id_bytes = holoport_id[0..32].try_into().unwrap();
         let holoport_id = VerifyingKey::from_bytes(&holoport_id_bytes).unwrap();
+
         let hpos_config = Config::new(
+            // email: String,
             email.clone(),
+            // password: String,
             password,
+            // registration_code: String,
             registration_code,
+            // revocation_pub_key: VerifyingKey,
             revocation_pub_key,
+            // derivation_path: String,
             device_derivation_path.to_string(),
+            // device_bundle: String,
             device_bundle_base64.clone(),
+            // device_pub_key: VerifyingKey,
             holoport_id,
         )
         .unwrap();
@@ -65,7 +73,7 @@ mod tests {
             settings,
         } = hpos_config.0
         {
-            assert_eq!(device_bundle, device_bundle_base64,);
+            assert_eq!(device_bundle, device_bundle_base64);
             assert_eq!(device_derivation_path, device_derivation_path.to_string());
             assert_eq!(revocation_pub_key, revocation_pub_key);
             assert_eq!(holoport_id, holoport_id);
