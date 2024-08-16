@@ -1021,10 +1021,12 @@ dependencies = [
  "failure",
  "hc_seed_bundle",
  "lazy_static",
+ "log",
  "rand 0.6.5",
  "serde",
  "serde_json",
  "sodoken",
+ "thiserror",
  "tokio",
  "url",
 ]
@@ -1043,6 +1045,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.8.2",
+ "tokio",
 ]
 
 [[package]]

@@ -1,9 +1,10 @@
-use hpos_config_core::{config::Seed, public_key, Config};
+use hpos_config_core::{
+    config::Seed, public_key, utils::get_seed_from_locked_device_bundle, Config,
+};
 
 use clap::Parser;
 use ed25519_dalek::*;
-use failure::Error;
-use rand::Rng;
+use failure::{Error, ResultExt};
 use sha2::{Digest, Sha512Trunc256};
 use std::{fs::File, io};
 
@@ -56,46 +57,11 @@ struct ClapArgs {
     seed_from: Option<String>,
 }
 
-// const USAGE: &str = "
-// Usage: hpos-config-gen-cli --email EMAIL --password STRING --registration-code STRING [--derivation-path NUMBER] [--device-bundle STRING] [--seed-from PATH]
-//        hpos-config-gen-cli --help
-
-// Creates HoloPortOS config file that contains seed and admin email/password.
-
-// Options:
-//   --email EMAIL                 HoloPort admin email address
-//   --password STRING             HoloPort admin password
-//   --registration-code CODE      HoloPort admin password
-//   --derivation-path NUMBER      Derivation path of the seed
-//   --device-bundle STRING        Device Bundle
-//   --seed-from PATH              Use SHA-512 hash of given file truncated to 256 bits as seed
-// ";
-
-// #[derive(Deserialize)]
-// struct Args {
-//     flag_email: String,
-//     flag_password: String,
-//     flag_registration_code: String,
-//     flag_revocation_pub_key: VerifyingKey,
-//     flag_derivation_path: Option<u32>,
-//     flag_device_bundle: Option<String>,
-//     flag_seed_from: Option<PathBuf>,
-// }
-
-fn main() -> Result<(), Error> {
+#[tokio::main]
+async fn main() -> Result<(), Error> {
     let args = ClapArgs::parse();
 
-    let seed = match args.seed_from {
-        None => rand::thread_rng().gen::<Seed>(),
-        Some(path) => {
-            let mut hasher = Sha512Trunc256::new();
-            let mut file = File::open(path)?;
-            io::copy(&mut file, &mut hasher)?;
-
-            let seed: Seed = hasher.result().into();
-            seed
-        }
-    };
+    let mut seed: Seed;
 
     let derivation_path = if let Some(derivation_path) = args.derivation_path {
         derivation_path
@@ -103,16 +69,38 @@ fn main() -> Result<(), Error> {
         hpos_config_core::utils::DEFAULT_DERIVATION_PATH_V2
     };
 
+    // TODO: don't hardcode this
+    let passphrase = "pass";
+
     let device_bundle = if let Some(device_bundle) = args.device_bundle {
+        seed = get_seed_from_locked_device_bundle(device_bundle.as_bytes(), passphrase).await?;
+
         device_bundle
     } else {
-        let passphrase = "pass";
-        let locked_device_bundle_encoded_bytes =
-            hpos_config_core::utils::generate_device_bundle(passphrase, Some(derivation_path))?;
+        let (locked_device_bundle_encoded_bytes, new_seed) =
+            hpos_config_core::utils::generate_device_bundle(passphrase, Some(derivation_path))
+                .await?;
 
-        base64::encode(&locked_device_bundle_encoded_bytes)
+        // TODO: does it make sense to get the seed from the bundle?
+        seed = new_seed;
+
+        base64::encode_config(&locked_device_bundle_encoded_bytes, base64::URL_SAFE_NO_PAD)
     };
 
+    let _ = hpos_config_core::utils::unlock(&device_bundle, passphrase)
+        .await
+        .context(format!("unlocking {device_bundle} with {passphrase}"))?;
+
+    if let Some(path) = args.seed_from {
+        let mut hasher = Sha512Trunc256::new();
+        let mut file = File::open(path)?;
+        io::copy(&mut file, &mut hasher)?;
+
+        seed = hasher.result().into();
+    };
+
+    // used as entropy when generating
+    // used in context of the host console
     let secret_key = SigningKey::from_bytes(&seed);
     let revocation_key = match &args.revocation_key {
         None => VerifyingKey::from(&secret_key),

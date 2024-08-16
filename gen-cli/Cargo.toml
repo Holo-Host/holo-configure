@@ -19,3 +19,4 @@ serde_json = { workspace = true }
 sha2 = "0.8"
 clap = { version = "4.5.16", features = ["derive"] }
 base64 = { workspace = true }
+tokio = { workspace = true }
