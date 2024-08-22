@@ -26,7 +26,6 @@ log = { workspace = true }
 tokio = { version = "1.12.0", features = [ "full" ] }
 hc_seed_bundle = "0.2.3"
 sodoken = "=0.0.11"
-enum-variants-strings = "0.3.0"
 strum = { version = "0.26.3", features = ["derive", "strum_macros"] }
 
 [dependencies.argon2min]
