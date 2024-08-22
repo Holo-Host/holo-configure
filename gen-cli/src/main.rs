@@ -1,5 +1,8 @@
 use hpos_config_core::{
-    config::Seed, public_key, utils::get_seed_from_locked_device_bundle, Config,
+    config::{ConfigDiscriminants, Seed},
+    public_key,
+    utils::get_seed_from_locked_device_bundle,
+    Config,
 };
 
 use clap::Parser;
@@ -55,6 +58,14 @@ struct ClapArgs {
         help = "Use SHA-512 hash of given file, truncated to 256 bits, as seed"
     )]
     seed_from: Option<String>,
+
+    #[arg(
+        long,
+        default_value_t = ConfigDiscriminants::V3,
+        ignore_case = true,
+        help = "Version specifier for the emitted config"
+    )]
+    config_version: ConfigDiscriminants,
 }
 
 #[tokio::main]
@@ -125,8 +136,11 @@ async fn main() -> Result<(), Error> {
         device_bundle,
         // device_pub_key: VerifyingKey,
         VerifyingKey::from(&secret_key),
-    )?;
+    )
+    .and_then(|(config, public_key)| Ok((config.try_convert(args.config_version)?, public_key)))?;
+
     eprintln!("{}", public_key::to_url(&public_key)?);
     println!("{}", serde_json::to_string_pretty(&config)?);
+
     Ok(())
 }
