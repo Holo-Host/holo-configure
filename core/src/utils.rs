@@ -91,6 +91,12 @@ pub async fn get_seed_from_locked_device_bundle(
 /// unlock seed_bundles to access the pub-key and seed
 pub async fn unlock(device_bundle: &String, passphrase: &str) -> SeedExplorerResult<SigningKey> {
     debug!("Base64 decoding device bundle.");
+    if device_bundle.is_empty() {
+        return Err(SeedExplorerError::Generic(
+            "called with device_bundle".into(),
+        ));
+    }
+
     let cipher = base64::decode_config(device_bundle, base64::URL_SAFE_NO_PAD)?;
     debug!("Matching device bundle cipher.");
     match UnlockedSeedBundle::from_locked(&cipher).await?.remove(0) {
