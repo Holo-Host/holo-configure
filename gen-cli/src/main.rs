@@ -75,7 +75,7 @@ async fn main() -> Result<(), Error> {
     let derivation_path = if let Some(derivation_path) = args.derivation_path {
         derivation_path
     } else {
-        hpos_config_core::utils::DEFAULT_DERIVATION_PATH_V2
+        hpos_config_core::config::default_derivation_path(ConfigDiscriminants::default())
     };
 
     // TODO: don't hardcode this

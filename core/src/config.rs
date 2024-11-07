@@ -62,7 +62,7 @@ pub struct Settings {
 }
 
 /// Returns the default derivation path per config version.
-pub const fn default_derivation_path(config: ConfigDiscriminants) -> usize {
+pub const fn default_derivation_path(config: ConfigDiscriminants) -> u32 {
     match config {
         // TODO: what should these be?
         ConfigDiscriminants::V1 => 3,

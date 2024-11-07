@@ -3,7 +3,7 @@ use failure::{bail, ResultExt};
 use log::debug;
 
 use crate::{
-    config::Seed,
+    config::{self, ConfigDiscriminants, Seed},
     types::{SeedExplorerError, SeedExplorerResult},
 };
 use hc_seed_bundle::{LockedSeedCipher, UnlockedSeedBundle};
@@ -47,7 +47,9 @@ pub async fn generate_device_bundle(
         .await
         .unwrap();
 
-    let derivation_path = maybe_derivation_path.unwrap_or(DEFAULT_DERIVATION_PATH_V3);
+    let derivation_path = maybe_derivation_path.unwrap_or(config::default_derivation_path(
+        ConfigDiscriminants::default(),
+    ));
 
     let device_bundle = master.derive(derivation_path).await.unwrap();
 
