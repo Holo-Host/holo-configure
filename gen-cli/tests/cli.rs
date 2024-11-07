@@ -2,7 +2,7 @@ use assert_cmd::prelude::*;
 use hpos_config_core::config::ConfigDiscriminants;
 use once_cell::sync::Lazy;
 // Add methods on commands
-use std::process::Command; // Run programs
+use std::{process::Command, str::FromStr}; // Run programs
 
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -57,8 +57,10 @@ fn gen_with_device_bundle() -> Result<(), Box<dyn std::error::Error>> {
     let config_version = if let Some(config_version) = &args.config_version {
         config_version.to_string()
     } else {
-        ConfigDiscriminants::default().to_string().replace('v', "")
+        ConfigDiscriminants::default().to_string()
     };
+    let derivation_path = hpos_config_core::config::default_derivation_path(ConfigDiscriminants::from_str(&config_version)?);
+
     cmd_args.extend_from_slice(&["--config-version", &config_version]);
 
     if let Some(device_bundle) = &args.device_bundle {
@@ -78,24 +80,25 @@ fn gen_with_device_bundle() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     assert_eq!(
-            clean_str(&output),
-            clean_str(&r#"
-            {
-                "v2": {
+        clean_str(&output),
+        clean_str(&format!(
+            r#"
+            {{
+                "v2": {{
                     "device_bundle": "k6VoY3NiMJGWonB3xBAp9K2BbqRJd0sS3pD1FHcGzhAAAAADxBhyjcHi1prEESr_g9g5aHDUaAm0CloHDBPEMSdaH_eSV94Qi_VUVZ626mV-dAYaHhcCNVbsJ06dWzMQnVtTaQQLtmW_o3qXFmBK6QrEAA",
-                    "derivation_path": "%% derivation_path %%",
+                    "derivation_path": "{derivation_path}",
                     "registration_code": "jQEAxhmwxrQq1duo7D6K/SiO92tLqNgo67sQ2uHolmlwGQ5y12ZrfFfFGiUvF3Kvf2Qx4aCtu6CYGZy9CtFonQ==",
-                    "settings": {
-                        "admin": {
+                    "settings": {{
+                        "admin": {{
                             "email": "vhpos.18379@holotest.dev",
                             "public_key": "8TH/5P1R21uOiCUOevs0f3FE2RwHiLXWoIjbqS8cxWU"
-                        }
-                    }
-                }
-            }
-            "#.replace("%% derivation_path %%", &config_version)
-            )
-        );
+                        }}
+                    }}
+                }}
+            }}
+            "#
+        ))
+    );
 
     Ok(())
 }

@@ -65,9 +65,9 @@ pub struct Settings {
 pub const fn default_derivation_path(config: ConfigDiscriminants) -> u32 {
     match config {
         // TODO: what should these be?
-        ConfigDiscriminants::V1 => 3,
-        ConfigDiscriminants::V2 => 3,
-        ConfigDiscriminants::V3 => 3,
+        ConfigDiscriminants::V1 => 2,
+        ConfigDiscriminants::V2 => 2,
+        ConfigDiscriminants::V3 => 2,
     }
 }
 
